@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique file name with timestamp
-    const uniqueFileName = `audio/${Date.now()}-${fileName}`;
+    // Generate unique file name with timestamp (no subfolder)
+    const uniqueFileName = `${Date.now()}-${fileName}`;
 
     // Create the S3 PutObject command
     const command = new PutObjectCommand({
