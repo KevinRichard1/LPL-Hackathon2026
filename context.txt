@@ -1,0 +1,63 @@
+AI Chatbot 
+Compliance Checker 
+General Assistance 
+ 
+Hotline?
+1. The "Call & Meeting" Monitor (Audio to Compliance)
+The Problem: Advisors make promises or give "guaranteed" returns on Zoom/Phone calls that are never recorded or checked for compliance.
+The Hackathon Solution: Use a transcription API (like Whisper) to feed live audio into your agent.
+The Agentic Logic: The agent scans for "Trigger Phrases" (e.g., "I guarantee you won't lose money" or "This crypto token is a sure thing").
+Action: Instead of just flagging it, the agent autonomously drafts a "Correction Disclosure" and emails it to the client immediately after the call to "cure" the compliance breach before an auditor sees it.
+Webex Compliance Copilot: An AI assistant that joins Webex meetings as a participant, listens in real time, and speaks when compliance risk is detected.
+
+
+Real-time monitoring: Transcribes meeting audio live and detects high-risk language such as promissory statements, unapproved product mentions, missing disclosures, or off-platform communication.
+
+
+In-meeting intervention: Delivers short, neutral voice reminders during the meeting (e.g., required disclosures or prohibited phrasing), without interrupting normal conversation.
+
+
+Audit-ready output: Automatically generates transcripts, flagged compliance events, severity levels, and suggested corrective language for post-meeting review.
+
+
+Financial-services focused: Designed for regulated environments like LPL Financial, supporting SEC/FINRA-aligned supervision while reducing manual compliance review.
+
+
+Advisor-first approach: Silent by default, configurable by policy, and positioned as real-time guardrails rather than surveillance.
+
+
+Member 1: The "Ear"Audio/Meeting LogicConvert audio to text using Amazon Transcribe.
+Member 2: The "Eyes"Text/SMS LogicCreate a mock "text log" and process it through Bedrock.
+Member 3: The "Brain"Bedrock OrchestratorWrite the Prompts & Guardrails for compliance checks.
+Member 4: The "Visualizer"QuickSight DashboardMap the "flags" from the agents into a risk chart.
+Member 5: The "Integrator"Frontend & StoryBuild a simple UI to "upload" a call/text and show the result.
+Step 1: The Audio Pipeline (Member 1)
+Since you have no real data, record a 30-second audio clip of yourself pretending to be a "sketchy" advisor (e.g., "I promise you 20% returns, just don't tell the home office").
+Action: Upload the file to an S3 Bucket.
+Trigger: Use a Lambda function to send it to Amazon Transcribe. It will spit out a JSON file of the text.
+Step 2: The Text Pipeline (Member 2)
+Create a simple CSV or JSON file with fake text messages.
+Examples: "Hey, let's move this to WhatsApp," or "I have a private deal for you."
+Task: This person ensures the data is clean and ready for the LLM to read.
+Step 3: The Bedrock "Compliance Brain" (Member 3)
+This is the most important part. You will use Bedrock Agents (specifically the Claude 3.5/3.7 Sonnet model).
+The Prompt: Give the agent a "Persona."
+"You are a Senior FINRA Compliance Officer. Analyze the following transcript for: 1. Guaranteed returns, 2. Off-channel comms requests, 3. Unapproved products. If found, categorize as HIGH RISK and extract the exact quote."
+Bedrock Guardrails: Use the built-in "Guardrails for Bedrock" to filter out PII (Personal Identity Info) like fake Social Security numbers.
+Step 4: The Risk Dashboard (Member 4)
+You need to show the "Bosses" that your tool works.
+Action: When the Bedrock agent finds a "red flag," it saves a row to a database (or a simple S3 file).
+QuickSight: Connect QuickSight to that file. Create a Donut Chart labeled "Risk Levels" (Red = Prohibited, Yellow = Needs Review, Green = Safe).
+Visual: Add a "Top Offenders" list. This proves the "Agent" is actually managing the firm's risk.
+Step 5: The Presentation (Member 5)
+While they code, you build the "Story."
+The Hook: "LPL paid $50M in fines for what we are about to solve in 24 hours."
+The Demo: Show the "Sketchy Audio" being processed, the Bedrock agent flagging the specific quote, and the QuickSight dashboard updating in real-time.
+
+
+
+The "Text Surveillance" Agent (Mobile Compliance)
+The Problem: The SEC is obsessed with "Recordkeeping." Advisors text clients because it's easier, but LPL can't see those texts.
+The Hackathon Solution: Build an agent that acts as a Compliance Proxy.
+The Logic: Instead of texting the client directly, the advisor texts the Agent. The Agent checks the text for PII (Personally Identifiable Information) or prohibited solicitations, logs it in the "Official Record," and then forwards it to the client.
+The Pivot: If the agent detects an "Anomaly" (like a client asking to move money to a suspicious offshore account), it autonomously triggers an AML Hold and pings the Risk team.
