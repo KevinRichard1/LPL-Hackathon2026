@@ -33,3 +33,7 @@ dist/
 # editor
 .idea/
 .vscode/
+
+.kiro
+.hypothesis
+*.zip
