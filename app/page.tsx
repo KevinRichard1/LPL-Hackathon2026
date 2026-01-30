@@ -38,15 +38,17 @@ function Navigation() {
   );
 }
 
-// Video upload component
-function VideoUpload() {
+// Audio upload component
+function AudioUpload() {
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
 
-  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAudioUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
+    setUploadStatus("Getting upload URL...");
 
     try {
       // Step 1: Get presigned URL from backend
@@ -61,9 +63,14 @@ function VideoUpload() {
         }),
       });
 
-      const { uploadUrl } = await response.json();
+      if (!response.ok) {
+        throw new Error(`Failed to get upload URL: ${response.statusText}`);
+      }
 
-      // Step 2: Upload video directly to S3 using presigned URL
+      const { uploadUrl, fileName } = await response.json();
+      setUploadStatus("Uploading to S3...");
+
+      // Step 2: Upload audio directly to S3 using presigned URL
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         headers: {
@@ -73,14 +80,22 @@ function VideoUpload() {
       });
 
       if (uploadResponse.ok) {
-        console.log('Video uploaded successfully to S3');
+        setUploadStatus("✅ Upload successful!");
+        console.log('Audio uploaded successfully to S3:', fileName);
+        
+        // TODO: Trigger transcription process here
+        // You can call another API endpoint to start transcription
+        
       } else {
-        console.error('Upload failed:', uploadResponse.statusText);
+        throw new Error(`Upload failed: ${uploadResponse.statusText}`);
       }
     } catch (error) {
       console.error('Upload error:', error);
+      setUploadStatus(`❌ Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUploading(false);
+      // Clear status after 5 seconds
+      setTimeout(() => setUploadStatus(""), 5000);
     }
   };
 
@@ -88,29 +103,35 @@ function VideoUpload() {
     <div className="flex flex-col items-center justify-center min-h-[400px] border-2 border-dashed border-gray-300 rounded-lg p-8">
       <Upload className="w-12 h-12 text-gray-400 mb-4" />
       <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        Upload Video for Compliance Review
+        Upload Audio for Compliance Review
       </h3>
       <p className="text-gray-600 mb-6 text-center">
-        Select a video file to analyze for compliance violations
+        Select an MP3 audio file to analyze for compliance violations
       </p>
       
-      <label htmlFor="video-upload">
+      {uploadStatus && (
+        <div className="mb-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
+          <p className="text-blue-800 text-sm font-medium">{uploadStatus}</p>
+        </div>
+      )}
+      
+      <label htmlFor="audio-upload">
         <Button 
           className="bg-copper-500 hover:bg-copper-600 text-white"
           disabled={uploading}
           asChild
         >
           <span>
-            {uploading ? 'Uploading...' : 'Upload Video'}
+            {uploading ? 'Uploading...' : 'Upload Audio'}
           </span>
         </Button>
       </label>
       
       <input
-        id="video-upload"
+        id="audio-upload"
         type="file"
-        accept="video/*"
-        onChange={handleVideoUpload}
+        accept=".mp3,audio/mp3,audio/mpeg"
+        onChange={handleAudioUpload}
         className="hidden"
       />
     </div>
@@ -128,11 +149,11 @@ export default function HomePage() {
             LPL Financial Call & Meeting Monitor
           </h1>
           <p className="text-lg text-gray-600">
-            AI-powered compliance monitoring for advisor meetings and calls
+            AI-powered compliance monitoring for advisor calls and meetings
           </p>
         </div>
         
-        <VideoUpload />
+        <AudioUpload />
       </main>
     </div>
   );
