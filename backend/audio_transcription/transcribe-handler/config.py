@@ -13,8 +13,8 @@ class Config:
     """Configuration class for the Audio Transcription Pipeline."""
     
     # S3 Bucket Configuration
-    AUDIO_UPLOAD_BUCKET: str = os.getenv("AUDIO_UPLOAD_BUCKET", "audio-uploads")
-    TRANSCRIPT_STORAGE_BUCKET: str = os.getenv("TRANSCRIPT_STORAGE_BUCKET", "transcripts-raw")
+    AUDIO_UPLOAD_BUCKET: str = os.getenv("AUDIO_UPLOAD_BUCKET", "audio-uploads-lpl-26")
+    TRANSCRIPT_STORAGE_BUCKET: str = os.getenv("TRANSCRIPT_STORAGE_BUCKET", "transcripts-raw-lpl-26")
     
     # AWS Configuration
     AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
