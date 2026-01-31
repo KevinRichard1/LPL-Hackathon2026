@@ -7,15 +7,22 @@ import { AlertTriangle, CheckCircle, XCircle, Loader2, RefreshCw } from "lucide-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
+type CoachingTip = {
+  violation: string;
+  correction: string;
+};
+
 type ComplianceReport = {
   severity: "Low" | "Medium" | "High";
   issues_found: string[];
+  coaching_tips?: CoachingTip[];
   summary: string;
   source_file: string;
   model: string;
   processed_at: string;
   request_id: string;
   guardrails_enabled: boolean;
+  escalated_autonomously?: boolean;
 };
 
 type Meeting = {
@@ -260,6 +267,11 @@ export default function ReportPage({ params }: { params: { meetingId: string } }
                 <CardTitle className="text-lg flex items-center gap-2">
                   {getRiskIcon(report.severity)}
                   Compliance Risk Level
+                  {report.escalated_autonomously && (
+                    <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200 ml-2">
+                      AUTO-ESCALATED
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -269,7 +281,7 @@ export default function ReportPage({ params }: { params: { meetingId: string } }
                 >
                   {report.severity.toUpperCase()} RISK
                 </Badge>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <p className="font-medium text-gray-500">Analysis Model</p>
                     <p className="text-gray-900">{report.model}</p>
@@ -278,6 +290,12 @@ export default function ReportPage({ params }: { params: { meetingId: string } }
                     <p className="font-medium text-gray-500">Guardrails Status</p>
                     <p className="text-gray-900">
                       {report.guardrails_enabled ? 'Enabled' : 'Disabled'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-500">Escalation Status</p>
+                    <p className="text-gray-900">
+                      {report.escalated_autonomously ? 'Auto-Escalated' : 'Standard Review'}
                     </p>
                   </div>
                 </div>
@@ -318,6 +336,49 @@ export default function ReportPage({ params }: { params: { meetingId: string } }
               </CardContent>
             </Card>
 
+            {/* Coaching Tips */}
+            {report.coaching_tips && report.coaching_tips.length > 0 && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Coaching Tips & Corrections</CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Specific violations found with recommended corrective language
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {report.coaching_tips.map((tip: CoachingTip, index: number) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4">
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <XCircle className="w-4 h-4 text-red-600" />
+                            <p className="font-medium text-red-800 text-sm">
+                              Violation #{index + 1}
+                            </p>
+                          </div>
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="text-red-700 italic">"{tip.violation}"</p>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <p className="font-medium text-green-800 text-sm">
+                              Recommended Correction
+                            </p>
+                          </div>
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p className="text-green-700">"{tip.correction}"</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Compliance Summary */}
             <Card className="mb-6">
               <CardHeader>
@@ -336,9 +397,18 @@ export default function ReportPage({ params }: { params: { meetingId: string } }
                   <ul className="text-sm text-gray-700 space-y-1">
                     {report.severity === "High" && (
                       <>
-                        <li>• Immediate supervisor notification required</li>
-                        <li>• Client corrective disclosure recommended</li>
-                        <li>• Mandatory compliance training scheduled</li>
+                        <li>• <strong>IMMEDIATE:</strong> Supervisor notification required</li>
+                        <li>• <strong>IMMEDIATE:</strong> Client corrective disclosure recommended</li>
+                        <li>• <strong>REQUIRED:</strong> Mandatory compliance training scheduled</li>
+                        {report.escalated_autonomously && (
+                          <>
+                            <li>• <strong>AUTO-ESCALATED:</strong> Case automatically flagged for review</li>
+                            <li>• <strong>URGENT:</strong> Comprehensive compliance review initiated</li>
+                          </>
+                        )}
+                        {report.coaching_tips && report.coaching_tips.length > 0 && (
+                          <li>• <strong>COACHING:</strong> Review specific violation corrections above</li>
+                        )}
                       </>
                     )}
                     {report.severity === "Medium" && (
@@ -346,6 +416,9 @@ export default function ReportPage({ params }: { params: { meetingId: string } }
                         <li>• Advisor coaching session recommended</li>
                         <li>• Review compliance guidelines for flagged areas</li>
                         <li>• Monitor future meetings closely</li>
+                        {report.coaching_tips && report.coaching_tips.length > 0 && (
+                          <li>• Review coaching tips for specific improvements</li>
+                        )}
                       </>
                     )}
                     {report.severity === "Low" && (
