@@ -360,7 +360,11 @@ export default function ComplianceDashboardPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button variant="outline" className="border-slate-200 text-slate-700">
+            <Button 
+              variant="outline" 
+              className="border-slate-200 text-slate-700"
+              onClick={() => window.location.href = '/'}
+            >
               Upload Audio
             </Button>
           </div>

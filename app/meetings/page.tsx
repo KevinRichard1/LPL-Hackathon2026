@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
-// Mock data for upcoming meetings
+// Mock data for upcoming meetings (keeping as static for now)
 const upcomingMeetings = [
   {
     id: "1",
@@ -41,43 +44,47 @@ const upcomingMeetings = [
   }
 ];
 
-// Mock data for past meetings
-const pastMeetings = [
-  {
-    id: "past-1",
-    date: "2026-01-29",
-    time: "3:00 PM",
-    advisors: "Sarah Johnson",
-    meetingUrl: "https://zoom.us/j/111222333",
-    status: "Completed"
-  },
-  {
-    id: "past-2",
-    date: "2026-01-28", 
-    time: "1:15 PM",
-    advisors: "Mike Chen, David Rodriguez",
-    meetingUrl: "https://teams.microsoft.com/l/meetup-join/...",
-    status: "Completed"
-  },
-  {
-    id: "past-3",
-    date: "2026-01-27",
-    time: "10:30 AM",
-    advisors: "Lisa Park",
-    meetingUrl: "https://webex.com/meet/advisor456",
-    status: "Completed"
-  },
-  {
-    id: "past-4",
-    date: "2026-01-26",
-    time: "4:45 PM",
-    advisors: "Tom Wilson, Jennifer Adams",
-    meetingUrl: "https://zoom.us/j/444555666",
-    status: "Completed"
-  }
-];
+type PastMeeting = {
+  id: string;
+  date: string;
+  time: string;
+  advisors: string;
+  meetingUrl: string;
+  status: string;
+  fileName?: string;
+  uploadTimestamp?: string;
+};
 
 export default function MeetingsPage() {
+  const [pastMeetings, setPastMeetings] = useState<PastMeeting[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch meetings from API
+  useEffect(() => {
+    async function fetchMeetings() {
+      try {
+        const response = await fetch('/api/meetings');
+        if (response.ok) {
+          const data = await response.json();
+          setPastMeetings(data.meetings);
+        } else {
+          console.error('Failed to fetch meetings');
+        }
+      } catch (error) {
+        console.error('Error fetching meetings:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMeetings();
+    
+    // Refresh meetings every 30 seconds to catch new uploads
+    const interval = setInterval(fetchMeetings, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Header */}
@@ -175,7 +182,16 @@ export default function MeetingsPage() {
 
         {/* Past Meetings Table */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Past Meetings</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Past Meetings</h2>
+            <Button 
+              onClick={() => window.location.reload()}
+              variant="outline"
+              className="text-sm"
+            >
+              Refresh
+            </Button>
+          </div>
           <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -198,44 +214,53 @@ export default function MeetingsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {pastMeetings.map((meeting) => (
-                  <tr key={meeting.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div>
-                        <div className="font-medium">{meeting.date}</div>
-                        <div className="text-gray-500">{meeting.time}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {meeting.advisors}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <a 
-                        href={meeting.meetingUrl}
-                        className="text-copper-500 hover:text-copper-600 underline truncate block max-w-xs"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {meeting.meetingUrl}
-                      </a>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                        {meeting.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Button 
-                        asChild
-                        className="bg-copper-500 hover:bg-copper-600 text-white text-xs px-3 py-1"
-                      >
-                        <Link href={`/reports/${meeting.id}`}>
-                          View Report
-                        </Link>
-                      </Button>
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                      Loading meetings...
                     </td>
                   </tr>
-                ))}
+                ) : pastMeetings.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                      No past meetings found. Upload an audio file to create your first meeting entry.
+                    </td>
+                  </tr>
+                ) : (
+                  pastMeetings.map((meeting) => (
+                    <tr key={meeting.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div>
+                          <div className="font-medium">{meeting.date}</div>
+                          <div className="text-gray-500">{meeting.time}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {meeting.advisors}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <span className="text-gray-600 italic">
+                          {meeting.meetingUrl}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                          {meeting.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <Button 
+                          asChild
+                          className="bg-copper-500 hover:bg-copper-600 text-white text-xs px-3 py-1"
+                        >
+                          <Link href={`/reports/${meeting.id}`}>
+                            View Report
+                          </Link>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

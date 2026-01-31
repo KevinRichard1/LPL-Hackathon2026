@@ -80,8 +80,30 @@ function AudioUpload() {
       });
 
       if (uploadResponse.ok) {
-        setUploadStatus("✅ Upload successful!");
-        console.log('Audio uploaded successfully to S3:', fileName);
+        setUploadStatus("Creating meeting entry...");
+        
+        // Create meeting entry after successful upload
+        try {
+          const meetingResponse = await fetch('/api/meetings/from-upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ fileName }),
+          });
+
+          if (meetingResponse.ok) {
+            const { meeting } = await meetingResponse.json();
+            setUploadStatus("✅ Upload successful! Meeting entry created.");
+            console.log('Audio uploaded and meeting created:', meeting);
+          } else {
+            setUploadStatus("✅ Upload successful! (Meeting entry creation failed)");
+            console.warn('Failed to create meeting entry');
+          }
+        } catch (meetingError) {
+          setUploadStatus("✅ Upload successful! (Meeting entry creation failed)");
+          console.warn('Error creating meeting entry:', meetingError);
+        }
         
         // TODO: Trigger transcription process here
         // You can call another API endpoint to start transcription
