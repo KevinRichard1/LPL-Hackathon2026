@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
+  region: process.env.MY_APP_REGION!,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.MY_APP_ACCESS_KEY!,
+    secretAccessKey: process.env.MY_APP_SECRET_KEY!,
   },
 });
 
@@ -13,8 +13,8 @@ export async function GET() {
   try {
     // Check environment variables
     const bucketName = process.env.S3_REPORTS_BUCKET_NAME;
-    const region = process.env.AWS_REGION;
-    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    const region = process.env.MY_APP_REGION;
+    const accessKeyId = process.env.MY_APP_ACCESS_KEY;
     
     const envCheck = {
       bucketName: bucketName || 'MISSING',
