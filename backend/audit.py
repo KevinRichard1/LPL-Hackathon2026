@@ -6,6 +6,7 @@ from datetime import datetime
 def lambda_handler(event, context):
     s3 = boto3.client("s3")
     bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+    sns = boto3.client("sns")
 
     # 1. Get S3 info
     bucket = event["Records"][0]["s3"]["bucket"]["name"]
@@ -37,10 +38,18 @@ Detect and extract:
 - Aggressive or coercive language
 - Misleading or unauthorized financial advice
 
-Return ONLY a valid JSON object with this exact schema:
+For every issue found, provide a 'Coaching Tip'—exactly what the advisor SHOULD have said to stay compliant.
+
+Return ONLY JSON:
 {{
   "severity": "Low | Medium | High",
-  "issues_found": ["string", "string"], 
+  "issues_found": ["string"],
+  "coaching_tips": [
+    {{
+      "violation": "the original quote",
+      "correction": "the compliant alternative"
+    }}
+  ],
   "summary": "2 sentence overview"
 }}
 
@@ -87,9 +96,19 @@ Transcript:
         audit_json["request_id"] = context.aws_request_id
         audit_json["guardrails_enabled"] = bool(os.environ.get("GUARDRAIL_ID"))
 
-        # 9. Save audit JSON to S3
-        output_key = f"audits/{key.split('/')[-1].replace('.json', '').replace('.txt', '')}_audit.json"
+        if audit_json.get("severity") == "High":
+            print("!!! AGENTIC ALERT: High Severity Detected !!!")
+            sns_topic_arn = os.environ.get("SNS_TOPIC_ARN")
+            if sns_topic_arn:
+                sns.publish(
+                    TopicArn=sns_topic_arn,
+                    Subject="URGENT: FINRA Compliance Violation",
+                    Message=f"ComplianceGuard has autonomously flagged a high-risk meeting.\n\nFile: {key}\nSummary: {audit_json.get('summary')}"
+                )
+            audit_json["escalated_autonomously"] = True
 
+        # 10. Save to S3 (The "Gold" Layer for UI)
+        output_key = f"audits/{key.split('/')[-1].replace('.json', '').replace('.txt', '')}_audit.json"
         s3.put_object(
             Bucket=bucket,
             Key=output_key,
