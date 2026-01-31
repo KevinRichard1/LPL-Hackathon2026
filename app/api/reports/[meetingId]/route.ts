@@ -46,7 +46,14 @@ export async function GET(
     // The backend creates report files by replacing the audio extension with .json
     // and stores them in the audit/ subfolder of the reports bucket
     const originalFileName = meeting.fileName;
-    const reportFileName = `audit/${originalFileName.replace(/\.(mp3|wav|m4a|flac|ogg)$/i, '.json')}`;
+    const baseName = originalFileName.includes('.') 
+        ? originalFileName.substring(0, originalFileName.lastIndexOf('.')) 
+        : originalFileName;
+    const reportFileName = `audits/${baseName}_audit.json`;
+
+    console.log('DEBUG: Attempting to fetch from S3...');
+    console.log('Bucket:', process.env.S3_REPORTS_BUCKET_NAME);
+    console.log('Key:', reportFileName);
     
     try {
       // Fetch the report file from the reports S3 bucket
