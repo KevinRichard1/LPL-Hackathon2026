@@ -26,10 +26,11 @@ async function readMeetings() {
 // GET - Fetch compliance report for a specific meeting
 export async function GET(
   request: NextRequest,
-  { params }: { params: { meetingId: string } }
+  { params }: { params: Promise<{ meetingId: string }> }
 ) {
   try {
-    const { meetingId } = params;
+    const resolvedParams = await params;
+    const meetingId = resolvedParams.meetingId;
     
     // Find the meeting to get the original filename
     const meetings = await readMeetings();
@@ -57,6 +58,9 @@ export async function GET(
     
     try {
       // Fetch the report file from the reports S3 bucket
+      const reportFileName = `audits/${baseName}_audit.json`;
+      console.log("FINAL_S3_KEY_CHECK:", reportFileName);
+
       const command = new GetObjectCommand({
         Bucket: process.env.S3_REPORTS_BUCKET_NAME!,
         Key: reportFileName,
